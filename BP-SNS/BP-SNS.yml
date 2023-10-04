@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This is an example blueprint to deploy SNS topic
+Resources:
+  ExampleTopic:
+    Type: AWS::SNS::Topic   
+    Properties:
+      TopicName: ExampleTopic
+      KmsMasterKeyId: alias/aws/sns
+  ExampleTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties: 
+      PolicyDocument:
+        Id: Id1
+        Version: '2012-10-17'
+        Statement:
+        - Sid: Sid2
+          Effect: Allow
+          Principal:
+            # "AWS" : '*'
+            "Service": "s3.amazonaws.com"
+          Action: 'sns:Publish'
+          Resource: !Ref ExampleTopic
+      Topics: 
+        - !Ref ExampleTopic
+        

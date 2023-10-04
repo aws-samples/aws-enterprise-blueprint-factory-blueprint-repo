@@ -1,0 +1,10 @@
+{
+    "SchemaVersion": "1.0",
+    "ProductVersionName": "1.0.1",
+    "Deprecated_Versions" : [],
+    "ProductVersionDescription": "This is the first version of the example blueprint to deploy a SNS topic",
+    "ProductType": "CLOUD_FORMATION_TEMPLATE",
+    "Properties": {
+        "TemplateFilePath": "./BP-SNS/BP-SNS.yml"
+    }
+}

@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for Drift Detection pipelin
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Join:
+        - '-'
+        - - blog-ebf-
+          - Ref: AWS::AccountId
+          - Ref: AWS::Region
+          - bucket
+          - Fn::Select:
+            - 0
+            - Fn::Split:
+              - '-'
+              - Fn::Select:
+                - 2
+                - Fn::Split:
+                  - /
+                  - Ref: AWS::StackId
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  S3Bucket:
+    Description: Drift Detection pipeline
+    Value:
+      Ref: S3Bucket

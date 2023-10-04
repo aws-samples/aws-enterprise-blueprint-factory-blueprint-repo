@@ -1,0 +1,10 @@
+{
+    "SchemaVersion": "1.0",
+    "ProductVersionName": "1.0.3",
+    "Deprecated_Versions" : [],
+    "ProductVersionDescription": "Initial product version for BP-S3 blueprint product",
+    "ProductType": "CLOUD_FORMATION_TEMPLATE",
+    "Properties": {
+        "TemplateFilePath": "./BP-S3/BP-S3.yml"
+    }
+}
