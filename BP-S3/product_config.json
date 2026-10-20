@@ -1,8 +1,8 @@
 {
     "SchemaVersion": "1.0",
-    "ProductVersionName": "1.0.3",
+    "ProductVersionName": "1.0.4",
     "Deprecated_Versions" : [],
-    "ProductVersionDescription": "Initial product version for BP-S3 blueprint product",
+    "ProductVersionDescription": "Enforce HTTPS-only access via bucket policy (deny aws:SecureTransport=false)",
     "ProductType": "CLOUD_FORMATION_TEMPLATE",
     "Properties": {
         "TemplateFilePath": "./BP-S3/BP-S3.yml"
