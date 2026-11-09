@@ -1,25 +1,65 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This is an example blueprint to deploy SNS topic
+Description: This is an example blueprint to deploy an encrypted SNS topic that only S3 buckets in this account can publish to
 Resources:
-  ExampleTopic:
-    Type: AWS::SNS::Topic   
+  # A customer managed key is required: the AWS managed key (alias/aws/sns) cannot be used
+  # by the S3 service principal, so S3 event notifications to the topic would fail.
+  ExampleTopicKey:
+    Type: AWS::KMS::Key
     Properties:
-      TopicName: ExampleTopic
-      KmsMasterKeyId: alias/aws/sns
-  ExampleTopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties: 
-      PolicyDocument:
-        Id: Id1
+      Description: Encrypts the ExampleTopic SNS topic
+      EnableKeyRotation: true
+      KeyPolicy:
         Version: '2012-10-17'
         Statement:
-        - Sid: Sid2
+          - Sid: AllowAccountAdministration
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: AllowS3ToUseKeyForThisAccountOnly
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action:
+              - kms:GenerateDataKey
+              - kms:Decrypt
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+  ExampleTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ExampleTopic
+      KmsMasterKeyId: !Ref ExampleTopicKey
+  ExampleTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Id: ExampleTopicPolicy
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowS3PublishFromThisAccountOnly
           Effect: Allow
           Principal:
-            # "AWS" : '*'
-            "Service": "s3.amazonaws.com"
+            Service: s3.amazonaws.com
           Action: 'sns:Publish'
           Resource: !Ref ExampleTopic
-      Topics: 
+          Condition:
+            StringEquals:
+              aws:SourceAccount: !Ref AWS::AccountId
+        - Sid: DenyInsecureTransport
+          Effect: Deny
+          Principal: '*'
+          Action: 'sns:Publish'
+          Resource: !Ref ExampleTopic
+          Condition:
+            Bool:
+              aws:SecureTransport: false
+      Topics:
         - !Ref ExampleTopic
-        
+Outputs:
+  TopicArn:
+    Description: ARN of the SNS topic deployed by this blueprint
+    Value: !Ref ExampleTopic

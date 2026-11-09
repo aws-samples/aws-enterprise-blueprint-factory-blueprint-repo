@@ -1,8 +1,8 @@
 {
     "SchemaVersion": "1.0",
-    "ProductVersionName": "1.0.4",
-    "Deprecated_Versions" : [],
-    "ProductVersionDescription": "Enforce HTTPS-only access via bucket policy (deny aws:SecureTransport=false)",
+    "ProductVersionName": "1.0.5",
+    "Deprecated_Versions": [],
+    "ProductVersionDescription": "Add public access block, SSE-KMS default encryption and server access logging",
     "ProductType": "CLOUD_FORMATION_TEMPLATE",
     "Properties": {
         "TemplateFilePath": "./BP-S3/BP-S3.yml"

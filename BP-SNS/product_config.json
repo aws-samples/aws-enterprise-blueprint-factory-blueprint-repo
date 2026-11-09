@@ -1,8 +1,8 @@
 {
     "SchemaVersion": "1.0",
-    "ProductVersionName": "1.0.1",
-    "Deprecated_Versions" : [],
-    "ProductVersionDescription": "This is the first version of the example blueprint to deploy a SNS topic",
+    "ProductVersionName": "1.0.2",
+    "Deprecated_Versions": [],
+    "ProductVersionDescription": "Use customer managed KMS key and restrict publish to S3 in this account",
     "ProductType": "CLOUD_FORMATION_TEMPLATE",
     "Properties": {
         "TemplateFilePath": "./BP-SNS/BP-SNS.yml"
