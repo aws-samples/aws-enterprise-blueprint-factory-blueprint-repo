@@ -1,8 +1,76 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CloudFormation template for Drift Detection pipelin
+Description: Example blueprint that deploys a private, encrypted, versioned and access-logged S3 bucket
 Resources:
+  AccessLogsBucket:
+    Type: AWS::S3::Bucket
+    Metadata:
+      checkov:
+        skip:
+          - id: CKV_AWS_18
+            comment: This bucket is the server access logging destination; logging it to itself would cause a loop.
+      guard:
+        SuppressedRules:
+          - S3_BUCKET_LOGGING_ENABLED
+          - S3_DEFAULT_ENCRYPTION_KMS
+          - S3_BUCKET_DEFAULT_LOCK_ENABLED
+          - S3_BUCKET_REPLICATION_ENABLED  # cross-Region replication is a customer DR decision, out of scope for this sample
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: This bucket is the server access logging destination.
+    Properties:
+      # S3 server access logging only supports SSE-S3 on the destination bucket.
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      VersioningConfiguration:
+        Status: Enabled
+  AccessLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Metadata:
+      guard:
+        SuppressedRules:
+          - S3_BUCKET_SSL_REQUESTS_ONLY  # DenyInsecureConnections denies all s3:* over non-TLS on the bucket and its objects
+    Properties:
+      Bucket: !Ref AccessLogsBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowS3ServerAccessLogging
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub '${AccessLogsBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt AccessLogsBucket.Arn
+              - !Sub '${AccessLogsBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: false
   S3Bucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      guard:
+        SuppressedRules:
+          - S3_BUCKET_DEFAULT_LOCK_ENABLED
+          - S3_BUCKET_REPLICATION_ENABLED  # cross-Region replication is a customer DR decision, out of scope for this sample
     Properties:
       BucketName:
         Fn::Join:
@@ -20,10 +88,30 @@ Resources:
                 - Fn::Split:
                   - /
                   - Ref: AWS::StackId
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LoggingConfiguration:
+        DestinationBucketName: !Ref AccessLogsBucket
+        LogFilePrefix: s3-access-logs/
       VersioningConfiguration:
         Status: Enabled
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Metadata:
+      guard:
+        SuppressedRules:
+          - S3_BUCKET_SSL_REQUESTS_ONLY  # DenyInsecureConnections denies all s3:* over non-TLS on the bucket and its objects
     Properties:
       Bucket:
         Ref: S3Bucket
@@ -49,6 +137,6 @@ Resources:
               aws:SecureTransport: false
 Outputs:
   S3Bucket:
-    Description: Drift Detection pipeline
+    Description: Name of the S3 bucket deployed by this blueprint
     Value:
       Ref: S3Bucket
